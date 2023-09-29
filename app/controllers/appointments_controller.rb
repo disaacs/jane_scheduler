@@ -1,5 +1,13 @@
 class AppointmentsController < ApplicationController
   def index
+    available_appointments = []
+    appointment = Appointment.new(type: params[:type], patient_name: 'Valuable Customer')
+    date = Date.parse(params[:date])
+    (9..16.5).step(0.5).each do |start_time|
+      appointment.starts_at = date+start_time.hours
+      available_appointments << appointment.dup if appointment.valid?
+    end
+    render json: available_appointments.as_json(only: [:starts_at, :ends_at, :type]), status: :ok
   end
 
   def create

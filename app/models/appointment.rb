@@ -58,7 +58,8 @@ class Appointment < ApplicationRecord
   end
 
   def does_not_overlap
-    if (Appointment.scheduled_slots(starts_at.to_date) & time_slots).present? 
+    @scheduled_slots ||= Appointment.scheduled_slots(starts_at.to_date)
+    if (@scheduled_slots & time_slots).present? 
       errors.add(:starts_at, 'conflicts with an existing appointment')
     end
   end
@@ -66,7 +67,7 @@ class Appointment < ApplicationRecord
   def during_business_hours
     if starts_at.hour < 9
       errors.add(:starts_at, 'is before 9 AM')
-    elsif (starts_at + appointment_length).hour >= 17
+    elsif (ends_at.hour+ends_at.min/30.0) > 17
       errors.add(:starts_at, 'is too late in the day for the type of appointment')
     end
   end
