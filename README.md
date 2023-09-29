@@ -56,7 +56,7 @@ During the development of this app, I've made the following assumptions
    - In other words, we don't have to worry about whose time is being booked.
 4. The assignment states “You do not need to include a database…” by which I presume you do not need to SEED a database with dummy data. A database is needed to store appointments and such.
 5. Times will be assumed to be UTC. This is a biggie, since it sidesteps timezone and DST issues. This is impractical in practice, but great for the purposes of this exercise.
-6. No security is necessary (e.g., user login, authorization). Again, impractical in practice, but let us focus on the purpose of the assignment.
+6. No security is necessary (e.g., user login, authorization). Again, impractical in practice, but it lets us focus on the purpose of the assignment.
 
 ## About the Schedule API
 
@@ -67,7 +67,7 @@ This API contains 3 endpoints.
 - GET /schedule - Returns a list of appointments booked for the specified date.
 
 ### GET /appointments
-Return a list of available appointsment for a specified date and appointment type.
+Return a list of available appointments for a specified date and appointment type.
 #### Required parameters
 - `date` - A parseable date string. For example `2023-09-30`.
 - `type` - The appointment type. One of `initial`, `standard`, `checkin`.
@@ -162,11 +162,11 @@ A JSON list of scheduled appointments, ordered by `starts_at` ascending. For exa
 ### Appointment model
 
 #### Validations
-The Appointment model is where most of the application validation happens. Most of the validations are straightforward, though the validation to check the `starts_at` have some involved time-based arithmatic.
+The Appointment model is where most of the application validation happens. Most of the validations are straightforward, though the validations to check the `starts_at` have some involved time-based arithmetic.
 
-Validating whether or not an appointment overlaps another appointment gets interesting. I decided to tackle this by introducing the concept of time-slots. A 9 AM - 5 PM day can be divided into 16 time slots, numbered 0 to 15. For any given appointment it is relatively easy to calculate which time slots it occupies and represent it as an array (see the `time_slots` method). Therefore to figure out whether or not a new appointment overlaps an existing appointment, all that is required is to build an array of occupied time slots from the existing appointments, and intersect that with the new appointment time slots. If there is any intersection, then there is a conflict.
+Validating whether or not an appointment overlaps another appointment gets interesting. I decided to tackle this by introducing the concept of time-slots. A 9 AM - 5 PM day can be divided into 16 time slots, numbered 0 to 15. For any given appointment it is relatively easy to calculate which time slots it occupies and represent it as an array (see the `time_slots` method). Therefore to figure out whether or not a new appointment overlaps an existing appointment, all that is required is to build an array of occupied time slots from the existing appointments, and intersect that with the new appointment time slots. If there is any intersection, then there is an overlap.
 
-It occurs to me that the Appointments model may have been better designed by NOT using the `starts_at` datetime , and instead using a `starting_slot` column. This would neatly sidestep the classic issues introduced by timezones and DST. Anyway, I am commited now—I don't have time to refactor the Appointments class to use `starting_slot` instead of `starts_at` 😛
+It occurs to me that the Appointments model may have been better designed by NOT using the `starts_at` datetime column, and instead using a `starting_slot` column. This would neatly sidestep the classic issues introduced by timezones and DST. Anyway, I am commited now—I don't have time to refactor the Appointments class to use `starting_slot` instead of `starts_at` 😛
 
 I also just realized I did not include any validation preventing creating appointments in the past. Ooops!
 
