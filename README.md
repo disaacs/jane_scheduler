@@ -4,6 +4,12 @@ This scheduler repo is my submission for https://github.com/SeeJaneHire/assignme
 
 There may be other slightly similar repos, but this one is mine 😄
 
+This assignment was fun, thanks! Keep reading to see how to setup the app and run the tests. You can also skip to the end to read some of my development notes.
+
+Cheers!
+
+Dave Isaacs
+
 ## Requirements
 
 The scheduler app requires ruby version 3.2.0.
@@ -150,4 +156,31 @@ A JSON list of scheduled appointments, ordered by `starts_at` ascending. For exa
   }
 ]
 ```
+
+## Development notes
+
+### Appointment model
+
+#### Validations
+The Appointment model is where most of the application validation happens. Most of the validations are straightforward, though the validation to check the `starts_at` have some involved time-based arithmatic.
+
+Validating whether or not an appointment overlaps another appointment gets interesting. I decided to tackle this by introducing the concept of time-slots. A 9 AM - 5 PM day can be divided into 16 time slots, numbered 0 to 15. For any given appointment it is relatively easy to calculate which time slots it occupies and represent it as an array (see the `time_slots` method). Therefore to figure out whether or not a new appointment overlaps an existing appointment, all that is required is to build an array of occupied time slots from the existing appointments, and intersect that with the new appointment time slots. If there is any intersection, then there is a conflict.
+
+It occurs to me that the Appointments model may have been better designed by NOT using the `starts_at` datetime , and instead using a `starting_slot` column. This would neatly sidestep the classic issues introduced by timezones and DST. Anyway, I am commited now—I don't have time to refactor the Appointments class to use `starting_slot` instead of `starts_at` 😛
+
+I also just realized I did not include any validation preventing creating appointments in the past. Ooops!
+
+### AppointmentsController
+I created an `appointment_params` method to filter the params received when creating a new appointment. It can be argued that this not necessary—strong params are most useful when updating resources, but updates are not in scope of this assignment. No matter, I added them anyway.
+
+The `index` method, which services the `GET /appointments` endpoint, is rather brute force. It calculates the available appointments by creating every possible appointment in a day and checking each for validity. This could be optimized by
+1. Don't bother to check appointments that would overlap 5 PM.
+2. Don't bother to check appointments that start in an already occupied time slot.
+
+I unfortunately did not have enough free time to investigate these optimizations.
+
+Also, I believe this method will blow up if you pass in an invalid date string or appointment type. An additional layer of validation is needed to handle such errors gracefully.
+
+
+
 
