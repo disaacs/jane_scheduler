@@ -10,6 +10,17 @@ RSpec.describe Appointment, type: :model do
           expect { appointment.save }.to change { Appointment.count }.by(1)
         end
       end
+
+      it 'successfully creates back-to-back appointments of different types' do
+        travel_to Time.parse('2023-09-29 00:00 UTC') do
+          expect {
+            Appointment.create(starts_at: Time.now.utc+9.hours, type: :initial, patient_name: 'Alice')
+            Appointment.create(starts_at: Time.now.utc+10.5.hours, type: :standard, patient_name: 'Bob')
+            Appointment.create(starts_at: Time.now.utc+11.5.hours, type: :checkin, patient_name: 'Carol')
+            Appointment.create(starts_at: Time.now.utc+12.hours, type: :initial, patient_name: 'Darryl')
+          }.to change { Appointment.count }.by(4)
+        end
+      end
     end
 
     context 'Invalid start times' do
@@ -62,6 +73,29 @@ RSpec.describe Appointment, type: :model do
           expect(appointment.errors.full_messages.first).to eq('Starts at conflicts with an existing appointment')
         end
       end      
+    end
+  end
+
+  describe 'ends_at attribute' do
+    it 'is 90 minutes after starts_at for an initial appointment' do
+      travel_to Time.parse('2023-09-29 09:00 UTC') do
+        appointment = Appointment.create(starts_at: Time.now.utc, type: :initial, patient_name: 'Alice')
+        expect(appointment.ends_at - appointment.starts_at).to eq(90.minutes)
+      end
+    end
+
+    it 'is 60 minutes after starts_at for a standard appointment' do
+      travel_to Time.parse('2023-09-29 09:00 UTC') do
+        appointment = Appointment.create(starts_at: Time.now.utc, type: :standard, patient_name: 'Alice')
+        expect(appointment.ends_at - appointment.starts_at).to eq(60.minutes)
+      end
+    end
+
+    it 'is 30 minutes after starts_at for an checkin appointment' do
+      travel_to Time.parse('2023-09-29 09:00 UTC') do
+        appointment = Appointment.create(starts_at: Time.now.utc, type: :checkin, patient_name: 'Alice')
+        expect(appointment.ends_at - appointment.starts_at).to eq(30.minutes)
+      end
     end
   end
 end

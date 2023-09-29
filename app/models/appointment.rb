@@ -18,6 +18,8 @@ class Appointment < ApplicationRecord
   validates :type, inclusion: { in: APPOINTMENT_TYPE.values, message: 'is unrecognized' }
   validate :starts_at_is_ok, on: :create
 
+  attr_accessor :ends_at
+
   class << self
     def schedule(date)
       Appointment.where('starts_at >= ? and starts_at < ?', date, date.tomorrow)
@@ -28,15 +30,25 @@ class Appointment < ApplicationRecord
     end
   end
 
+  def as_json(options = {})
+    super(options).merge(ends_at: self.ends_at)
+  end
+
   def time_slots
-    starting_slot = starts_at.hour - 9
+    starting_slot = (starts_at.hour - 9)*2 + starts_at.min/30
     ending_slot = starting_slot + appointment_length/30.minutes - 1
     (starting_slot..ending_slot).to_a
+  end
+
+  def ends_at
+    starts_at + appointment_length
   end
 
   def appointment_length
     APPOINTMENT_LENGTH[type.to_sym] || 0
   end
+
+  private
 
   def starts_at_is_ok
     does_not_overlap
