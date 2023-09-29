@@ -1,10 +1,11 @@
 class Appointment < ApplicationRecord
   self.inheritance_column = nil
+  default_scope { order(starts_at: :asc) }
 
   APPOINTMENT_TYPE = {
     initial:  'initial',
     standard: 'standard',
-    checkin:  'checking'
+    checkin:  'checkin'
   }
 
   APPOINTMENT_LENGTH = {

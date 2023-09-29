@@ -46,10 +46,43 @@ RSpec.describe "Appointments", type: :request do
         post '/appointments', params: appointment_params, as: :json
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to eq('application/json; charset=utf-8') # Modify this line
+        expect(response.content_type).to eq('application/json; charset=utf-8')
         expect(JSON.parse response.body).to eq({
           "errors" => ["Type is unrecognized"]
         })
+      end
+    end
+  end
+
+  describe 'GET /schedule' do
+    context 'with a valid date parameter' do
+      it 'returns appointments for the specified date in the correct order' do
+        valid_date = Date.tomorrow
+        Appointment.create(starts_at: valid_date+9.hours, type: :initial, patient_name: 'Alice')
+        Appointment.create(starts_at: valid_date+12.hours, type: :standard, patient_name: 'Bob')
+        Appointment.create(starts_at: valid_date+16.hours, type: :checkin, patient_name: 'Carol')
+
+        get "/schedule?date=#{valid_date}", headers: { 'ACCEPT' => 'application/json' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+
+        json_body = JSON.parse response.body
+        expect(json_body.size).to eq(3)
+        expect(json_body.map { |a| a['type'] }).to eq(%w[initial standard checkin])
+      end
+    end
+
+    context 'with an invalid data parameter' do
+      it 'returns an invalid date error' do
+        get "/schedule?date=invalid_date", headers: { 'ACCEPT' => 'application/json' }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+        expect(JSON.parse response.body).to eq({
+          "errors" => ["Invalid date"]
+        })
+
       end
     end
   end
